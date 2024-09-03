@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import Searchbar from './component/Searchbar';
+import Pokemon from './component/Pokemon';
+import { getPokemon, getPokemonDetails } from './api/Api';
 
-function App() {
+const App = () => {
+  const [pokemonList, setPokemonList] = useState([]);
+  const [filteredPokemon, setFilteredPokemon] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchPokemon = async () => {
+      const pokemonResults = await getPokemon();
+      const detailedPokemon = await Promise.all(
+        pokemonResults.map(async (pokemon) => {
+          return await getPokemonDetails(pokemon.url);
+        })
+      );
+      setPokemonList(detailedPokemon);
+      setFilteredPokemon(detailedPokemon);
+    };
+    fetchPokemon();
+  }, []);
+
+  useEffect(() => {
+    const filtered = pokemonList.filter((pokemon) =>
+      pokemon.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredPokemon(filtered);
+  }, [searchQuery, pokemonList]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Searchbar onSearch={setSearchQuery} />
+      <div className="flex flex-wrap items-center justify-evenly">
+        {filteredPokemon.map((pokemon) => (
+          <Pokemon key={pokemon.id} pokemon={pokemon} />
+        ))}
+      </div>
     </div>
   );
-}
+};
 
 export default App;
